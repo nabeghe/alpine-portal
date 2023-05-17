@@ -34,7 +34,7 @@ Include the following `<script>` tag in the `<head>` of your document, just befo
 npm i alpine-portal
 ```
 
-Add the `x-portal` directive to your alproject by importing the package **before** Alpine.js.
+Add the `x-portal` directive to your project by importing the package **before** Alpine.js.
 
 ```js
 import Alpine from 'alpinejs';
@@ -52,10 +52,10 @@ The x-portal directive must be added to the desired element.  The value of the x
 (target) where the element will be teleported to.
 Then, you can use the following options to set additional values:
 
-- x-portal:screen: Specifies the screen breakpoint (a number, e.g., 1024).
-- x-portal:is: Determines whether the comparison should be greater than or less than (a boolean, true 
+- `x-portal:screen`: Specifies the screen breakpoint (a number, e.g. 1024).
+- `x-portal:is`: Determines whether the comparison should be greater than or less than (a boolean, true 
 or false; default: true, meaning greater than).
-- x-portal:target: Instead of specifying the target within the x-portal directive, you can write it as 
+- `x-portal:target`: Instead of specifying the target within the x-portal directive, you can write it as 
 an expression here.
 
 ### Example:
