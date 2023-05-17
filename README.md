@@ -30,7 +30,7 @@ world (screen size) in order to move elements between them. 😅
 Include the following `<script>` tag in the `<head>` of your document, just before Alpine.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/nabeghe/alpine-portal@v0.2.0/dist/alpine-portal.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/gh/nabeghe/alpine-portal@v0.2.1/dist/alpine-portal.min.js" defer></script>
 ```
 
 ### NPM
