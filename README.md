@@ -4,6 +4,8 @@
 
 Real-time relocation of an element to a different position in various sizes
 
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/nabeghe/alpine-portal?label=version&style=for-the-badge)
+![Build size Brotli](https://img.badgesize.io/nabeghe/alpine-portal/master/dist/alpine-portal.js.svg?compression=gzip&style=for-the-badge&color=green)
 ## About
 
 This plugin adds a new directive called x-portal to Alpine. x-portal is similar to x-teleport within 
