@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" xmlns:x-portal="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Alpine Portal</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="../dist/alpine-portal.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body style="color: #212121; margin: 0; padding: 0;">
+
+    <div x-data id="div1" style="background: #E91E63; padding: 5px;">
+        <h2>Div 1</h2>
+        <div x-portal="#div2" x-portal:screen="640" x-portal:is="true">
+            lorem ipsum dolor sit amet, consectetur adipisicing elit
+        </div>
+    </div>
+
+    <div x-data id="div2"  style="background: #8BC34A; padding: 5px;">
+        <h2>Div 2</h2>
+    </div>
+
+</body>
+</html>
