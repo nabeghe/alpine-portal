@@ -1,6 +1,6 @@
 {
   "name": "alpine-portal",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "x-portal directive for alpine to moving elements between different points based on the screen size.",
   "main": "src/index.js",
   "scripts": {

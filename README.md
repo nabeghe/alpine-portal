@@ -7,7 +7,7 @@ During real-time screen size changes, the breakpoint is re-evaluated,
 and the element may be moved to the second position or returned to the initial position.
 
 ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/nabeghe/alpine-portal?label=version&style=for-the-badge)
-![Build size Brotli](https://img.badgesize.io/nabeghe/alpine-portal/master/dist/alpine-portal.js.svg?compression=gzip&style=for-the-badge&color=green)
+![Build size Brotli](https://img.badgesize.io/nabeghe/alpine-portal/master/dist/alpine-portal.min.js.svg?compression=gzip&style=for-the-badge&color=green)
 ## About
 
 This plugin adds a new directive called `x-portal` to Alpine.
