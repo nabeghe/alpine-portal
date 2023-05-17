@@ -30,5 +30,10 @@ export default function (Alpine) {
 
         // Set the property for the portal.
         el._x_portal[value] = expression;
+
+        // If the screen size breakpoint has changed, update the portal.
+        if (value && value === 'screen') {
+            el._x_portal.update();
+        }
     });
 };

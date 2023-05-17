@@ -10,9 +10,9 @@ const config = {
     output: [
         {
             name: 'AlpinePortal',
-            file: 'dist/alpine-portal.js',
+            file: `dist/alpine-portal${!isDev ? '.min' : ''}.js`,
             format: 'umd',
-            sourcemap: true
+            sourcemap: isDev
         }
     ],
     plugins: [

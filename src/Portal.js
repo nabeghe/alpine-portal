@@ -2,8 +2,9 @@
  * Portal that controls the teleportation process.
  *
  * @since 0.1.0
+ * @since 0.2.0 Instead of the `window.onresize` event, `window.mediaMatch` was used.
  *
- * @param {HTMLElement} el
+ * @param {HTMLElement} el The element for which the portal is active.
  * @constructor
  */
 function Portal(el) {
@@ -12,9 +13,9 @@ function Portal(el) {
      * Target selector.
      *
      * @since 0.1.0
-     * @type {string}
+     * @type {string|null}
      */
-    this.target = '';
+    this.target = null;
 
     /**
      * Screen breakpoint.
@@ -25,15 +26,6 @@ function Portal(el) {
     this.screen = 0;
 
     /**
-     * Whether to teleport if it is greater than the specified screen breakpoint or if it is smaller.
-     * The default is true, which means teleporting if it is greater.
-     *
-     * @since 0.1.0
-     * @type {boolean}
-     */
-    this.is = true;
-
-    /**
      * The element belonging to the first parent so that it can be reverted to it after teleportation.
      *
      * @since 0.1.0
@@ -42,43 +34,57 @@ function Portal(el) {
     const elRealParent = el.parentElement;
 
     /**
-     * Whether it has been teleported to the target or not.
-     * In other words, whether the element is inside the target or not.
+     * The media query object that checks the page resize based on the CSS engine.
      *
-     * @since 0.1.0
-     * @type {boolean}
+     * @since 0.2.0
+     * @type {MediaQueryList|null}
      */
-    let teleported = false;
+    let mediaQuery = null;
+
+    /**
+     * Initializes the media query based on the current size of the portal screen from the beginning."
+     *
+     * @since 0.2.0
+     */
+    this.update = () => {
+        // If there was a portal previously.
+        if (mediaQuery) {
+            // Turn off the previous portal.
+            mediaQuery.removeEventListener('change', this.onResize);
+            mediaQuery = null;
+        }
+
+        // When the screen is at 0, the portal teleportation is off.
+        if (this.screen === 0) return;
+
+        // The min-width or max-width state of the media query is determined based on the negative/positive sign of the screen size.
+        mediaQuery = window.matchMedia(`(${this.screen > 0 ? 'min' : 'max'}-width: ${Math.abs(this.screen)}px)`);
+
+        // Turn on the portal.
+        mediaQuery.addEventListener('change', this.onResize);
+    }
 
     /**
      * Window resize event.
      *
      * @since 0.1.0
+     * @since 0.2.0 The usage of `window.onresize` event has been changed to `window.meatchMedia` and its `addEventListener` method of type 'change'.
+     *
+     * @param {MediaQueryList} e The media query object.
      */
-    this.onResize = () => {
-        const isScreen = window.innerWidth > this.screen;
-
-        // If it has been previously teleported to the target, then the element's return must be checked.
-        if (teleported) {
-            if ((this.is && !isScreen) || (!this.is && isScreen)) {
-                elRealParent.appendChild(el);
-                teleported = false;
-            }
-            return;
-        }
-
-        // If it has not been previously teleported to the target, then the teleportation to the target must be checked.
-        if ((this.is && isScreen) || (!this.is && !isScreen)) {
+    this.onResize = (e) => {
+        // When the conditions were met for teleporting to the target.
+        if (e.matches) {
             document.querySelector(this.target).appendChild(el);
-            teleported = true;
+        }
+        // When the conditions were met for returning to the initial position, then it should be teleported back to the initial position.
+        else {
+            elRealParent.appendChild(el);
         }
     }
 
-    // Define the screen resize event.
-    window.addEventListener("resize", this.onResize);
-
     // For the next tick, set up the screen resize event to be executed and checked at the beginning of document load.
-    window.Alpine.nextTick(this.onResize);
+    window.Alpine.nextTick(() => this.onResize(mediaQuery));
 }
 
 export default Portal;
