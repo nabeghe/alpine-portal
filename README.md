@@ -30,7 +30,7 @@ world (screen size) in order to move elements between them. 😅
 Include the following `<script>` tag in the `<head>` of your document, just before Alpine.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/nabeghe/alpine-portal@v0.2.1/dist/alpine-portal.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/gh/nabeghe/alpine-portal@v0.2.x/dist/alpine-portal.min.js" defer></script>
 ```
 
 ### NPM
@@ -83,10 +83,10 @@ If we were to use -640, it would mean that it should be smaller than or equal to
 
 ## Changes
 
-- v0.2.0
+- v0.2.x
     - Instead of using the resize event in the window, matchMedia was used. Thanks to ekvoka [#1](https://github.com/nabeghe/alpine-portal/issues/1). 
     - `x-portal:is` has been removed, and from now on, it can be specified within `x-portal:screen` itself.
-- v0.1.0
+- v0.1.x
     - Initial release
 
 ## License
