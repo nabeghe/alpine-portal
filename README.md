@@ -88,7 +88,7 @@ If we were to use -640, it would mean that it should be smaller than or equal to
     - `x-portal:is` has been removed, and from now on, it can be specified within `x-portal:screen` itself.
 - v0.1.0
     - Initial release
-    - 
+
 ## License
 
 Copyright (c) 2023 Hadi Akbarzadeh
