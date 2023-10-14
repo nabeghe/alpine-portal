@@ -1,5 +1,3 @@
-> ✨ Support me: [wallet address](https://elatel.ir).
-
 # Alpine Portal
 
 Teleports an element to another position based on the defined breakpoint for the screen size.
