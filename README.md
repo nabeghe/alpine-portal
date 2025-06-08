@@ -93,6 +93,6 @@ If we were to use -640, it would mean that it should be smaller than or equal to
 
 ## License
 
-Copyright (c) 2023 Hadi Akbarzadeh
+Copyright (c) Hadi Akbarzadeh
 
 Licensed under the MIT license, see [LICENSE.md](LICENSE.md) for details.
