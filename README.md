@@ -1,5 +1,9 @@
 # Alpine Portal
 
+<p align="center">
+    <img src="https://github.com/user-attachments/assets/08dfdc8f-a529-4ffe-a486-eba6d21f22a7" width="400"/>
+</p>
+
 Teleports an element to another position based on the defined breakpoint for the screen size.
 During real-time screen size changes, the breakpoint is re-evaluated,
 and the element may be moved to the second position or returned to the initial position.
