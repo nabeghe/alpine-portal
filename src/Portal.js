@@ -69,6 +69,7 @@ function Portal(el) {
      *
      * @since 0.1.0
      * @since 0.2.0 The usage of `window.onresize` event has been changed to `window.meatchMedia` and its `addEventListener` method of type 'change'.
+     * @since 0.2.4 Avoiding Livewire re-run (see https://github.com/nabeghe/alpine-portal/issues/2)
      *
      * @param {MediaQueryList} e The media query object.
      */
@@ -82,8 +83,7 @@ function Portal(el) {
             elRealParent.appendChild(el);
         }
     }
-    
-    // Avoiding Livewire re-run (see https://github.com/nabeghe/alpine-portal/issues/2)
+
     document.addEventListener('livewire:navigating', () => mediaQuery.removeEventListener('change', this.onResize));
 
     // For the next tick, set up the screen resize event to be executed and checked at the beginning of document load.
