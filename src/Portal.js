@@ -82,6 +82,9 @@ function Portal(el) {
             elRealParent.appendChild(el);
         }
     }
+    
+    // Avoiding Livewire re-run (see https://github.com/nabeghe/alpine-portal/issues/2)
+    document.addEventListener('livewire:navigating', () => mediaQuery.removeEventListener('change', this.onResize));
 
     // For the next tick, set up the screen resize event to be executed and checked at the beginning of document load.
     window.Alpine.nextTick(() => this.onResize(mediaQuery));
