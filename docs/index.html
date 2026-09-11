@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpine Portal — Responsive DOM Teleportation for Alpine.js</title>
+    <meta name="description" content="Screen-size-responsive, bidirectional DOM teleportation plugin for Alpine.js v3.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+    
+    <!-- Alpine.js & Alpine Portal -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="./alpine-portal.min.js"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #131b2e;
+            --bg-code: #070a12;
+            --border-color: #1e293b;
+            --border-highlight: #334155;
+            --primary: #818cf8;
+            --primary-glow: rgba(129, 140, 248, 0.15);
+            --accent: #38bdf8;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --sidebar-w: 280px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        [x-cloak] { display: none !important; }
+
+        /* ── Header ── */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 800;
+            font-size: 1.25rem;
+        }
+        .nav-brand span.logo-badge {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--primary); }
+        .github-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-highlight);
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .github-btn:hover {
+            border-color: var(--primary);
+            background: rgba(129, 140, 248, 0.1);
+        }
+
+        /* ── Sidebar ── */
+        aside.sidebar {
+            position: fixed;
+            top: 64px;
+            bottom: 0;
+            left: 0;
+            width: var(--sidebar-w);
+            background: rgba(11, 15, 25, 0.95);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 1.5rem 1rem;
+            z-index: 40;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .sidebar-group { margin-bottom: 1.5rem; }
+        .sidebar-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            font-weight: 700;
+            padding: 0 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .sidebar-link {
+            display: block;
+            padding: 0.45rem 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+        .sidebar-link:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .sidebar-link.active {
+            color: var(--primary);
+            background: var(--primary-glow);
+            font-weight: 600;
+        }
+
+        /* ── Main Content Layout ── */
+        main {
+            margin-left: var(--sidebar-w);
+            margin-top: 64px;
+            padding: 3rem 4rem;
+            max-width: 1040px;
+        }
+
+        @media (max-width: 900px) {
+            aside.sidebar {
+                transform: translateX(-100%);
+            }
+            aside.sidebar.open {
+                transform: translateX(0);
+                box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+            }
+            main {
+                margin-left: 0;
+                padding: 2rem 1.5rem;
+            }
+            .mobile-toggle { display: block !important; }
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* ── Typography & Headings ── */
+        h1.doc-title {
+            font-size: 2.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+        p.doc-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+        h2.section-heading {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-top: 3.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        h3.sub-heading {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            color: #e2e8f0;
+        }
+        p, ul, ol {
+            color: #cbd5e1;
+            margin-bottom: 1.25rem;
+            font-size: 1rem;
+        }
+        ul, ol { padding-left: 1.5rem; }
+        li { margin-bottom: 0.5rem; }
+
+        /* ── Code Blocks & Syntax ── */
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background: #1e293b;
+            color: #a5b4fc;
+            padding: 0.2em 0.45em;
+            border-radius: 5px;
+            font-size: 0.88em;
+        }
+        .code-wrapper {
+            position: relative;
+            background: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin: 1.25rem 0;
+            overflow: hidden;
+        }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #101726;
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.75rem;
+            color: #64748b;
+            font-family: monospace;
+        }
+        .copy-btn {
+            background: transparent;
+            border: 1px solid #334155;
+            color: var(--text-muted);
+            border-radius: 5px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            color: white;
+            border-color: var(--primary);
+        }
+        pre {
+            padding: 1.25rem;
+            overflow-x: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #e2e8f0;
+        }
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* ── Tables ── */
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            text-align: left;
+        }
+        th, td {
+            padding: 0.85rem 1rem;
+            border: 1px solid var(--border-color);
+        }
+        th {
+            background: var(--bg-card);
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        tr:nth-child(even) { background: rgba(255, 255, 255, 0.015); }
+
+        /* ── Alert Boxes ── */
+        .alert {
+            background: rgba(129, 140, 248, 0.08);
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+        .alert.tip {
+            background: rgba(56, 189, 248, 0.08);
+            border-left-color: var(--accent);
+        }
+        .alert strong { color: var(--primary); }
+        .alert.tip strong { color: var(--accent); }
+
+        /* ── Interactive Playground Sandbox ── */
+        .sandbox {
+            background: var(--bg-card);
+            border: 1px solid var(--border-highlight);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .sandbox-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .sandbox-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+        @media (max-width: 640px) {
+            .sandbox-grid { grid-template-columns: 1fr; }
+        }
+        .sandbox-box {
+            background: var(--bg-main);
+            border: 2px dashed #475569;
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 140px;
+        }
+        .sandbox-box.target { border-color: #6366f1; }
+        .portal-item {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 0.85rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        footer {
+            margin-top: 5rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body x-data="{
+    sidebarOpen: false,
+    activeSection: 'intro',
+    viewportWidth: window.innerWidth,
+    sandboxCondition: false,
+    copyCode(btn) {
+        const pre = btn.closest('.code-wrapper').querySelector('pre');
+        navigator.clipboard.writeText(pre.innerText.trim());
+        const orig = btn.innerText;
+        btn.innerText = 'Copied!';
+        btn.style.color = '#34d399';
+        setTimeout(() => { btn.innerText = orig; btn.style.color = ''; }, 2000);
+    }
+}" @resize.window="viewportWidth = window.innerWidth">
+
+    <!-- Top Navigation Bar -->
+    <header>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="mobile-toggle" @click="sidebarOpen = !sidebarOpen" aria-label="Toggle navigation">
+                ☰
+            </button>
+            <a href="#" class="nav-brand">
+                <span>🌀 Alpine Portal</span>
+                <span class="logo-badge">v1.0.0</span>
+            </a>
+        </div>
+        <div class="nav-links">
+            <span style="font-size: 0.85rem; color: #64748b; font-family: monospace;" x-text="'Viewport: ' + viewportWidth + 'px'"></span>
+            <a href="https://github.com/nabeghe/alpine-portal" target="_blank" rel="noopener" class="github-btn">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                GitHub
+            </a>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" :class="sidebarOpen && 'open'">
+        <div class="sidebar-group">
+            <div class="sidebar-title">Getting Started</div>
+            <a href="#introduction" class="sidebar-link" @click="sidebarOpen = false">Introduction</a>
+            <a href="#installation" class="sidebar-link" @click="sidebarOpen = false">Installation</a>
+            <a href="#quick-start" class="sidebar-link" @click="sidebarOpen = false">Quick Start</a>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-title">Core Engine</div>
+            <a href="#bidirectional" class="sidebar-link" @click="sidebarOpen = false">Bidirectional Nature</a>
+            <a href="#sibling-order" class="sidebar-link" @click="sidebarOpen = false">Exact Sibling Ordering</a>
+            <a href="#cls-spacer" class="sidebar-link" @click="sidebarOpen = false">Layout Shift (.spacer)</a>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-title">Breakpoints & Queries</div>
+            <a href="#breakpoints" class="sidebar-link" @click="sidebarOpen = false">Breakpoint Syntax</a>
+            <a href="#named-screens" class="sidebar-link" @click="sidebarOpen = false">Tailwind Named Screens</a>
+            <a href="#ranges" class="sidebar-link" @click="sidebarOpen = false">Range Queries</a>
+            <a href="#media-queries" class="sidebar-link" @click="sidebarOpen = false">Arbitrary Media Queries</a>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-title">Advanced Features</div>
+            <a href="#placements" class="sidebar-link" @click="sidebarOpen = false">Placement Modifiers</a>
+            <a href="#multi-target" class="sidebar-link" @click="sidebarOpen = false">Multi-Target Routing</a>
+            <a href="#conditional-when" class="sidebar-link" @click="sidebarOpen = false">Conditional (when)</a>
+            <a href="#events" class="sidebar-link" @click="sidebarOpen = false">Lifecycle Events</a>
+            <a href="#livewire" class="sidebar-link" @click="sidebarOpen = false">Livewire & Teardown</a>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-title">Reference</div>
+            <a href="#live-playground" class="sidebar-link" @click="sidebarOpen = false">🎮 Live Playground</a>
+            <a href="#cheat-sheet" class="sidebar-link" @click="sidebarOpen = false">API & Cheat Sheet</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <h1 class="doc-title">Alpine Portal</h1>
+        <p class="doc-subtitle">
+            Screen-size-responsive, bidirectional DOM teleportation for <strong>Alpine.js v3</strong>.<br>
+            Move elements between containers based on CSS media queries and restore them automatically.
+        </p>
+
+        <!-- Section: Introduction -->
+        <section id="introduction">
+            <h2 class="section-heading">📖 Introduction</h2>
+            <p>
+                Alpine's built-in <code>x-teleport</code> directive moves elements unconditionally to another part of the DOM. 
+                However, real-world responsive design often requires an element (such as a search bar, navigation links, or action button) 
+                to live in one container on mobile (e.g. inside a drawer) and inside a completely different layout container on desktop (e.g. the header bar).
+            </p>
+            <p>
+                <strong>Alpine Portal</strong> provides the <code>x-portal</code> directive to solve this natively:
+            </p>
+            <ul>
+                <li>📐 <strong>Media Query Driven:</strong> Evaluated by the browser's native CSS engine via <code>window.matchMedia</code>.</li>
+                <li>🔄 <strong>Order-Preserving Bidirectional:</strong> Automatically returns elements to their exact original sibling slot when the viewport changes.</li>
+                <li>🎯 <strong>Multi-Target Routing:</strong> Jump between multiple container targets across various screen sizes.</li>
+                <li>🛡️ <strong>Layout Shift Free:</strong> Optional <code>.spacer</code> prevents Cumulative Layout Shift (CLS).</li>
+                <li>🪶 <strong>Zero Dependencies:</strong> Lightweight pure vanilla JS (under 2KB gzipped).</li>
+            </ul>
+        </section>
+
+        <!-- Section: Installation -->
+        <section id="installation">
+            <h2 class="section-heading">📦 Installation</h2>
+
+            <h3 class="sub-heading">Via CDN</h3>
+            <p>Include Alpine Portal before loading Alpine.js:</p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>HTML</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>&lt;!-- Alpine Portal v1.0.0 --&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/nabeghe/alpine-portal@v1.0.0/dist/alpine-portal.min.js" defer&gt;&lt;/script&gt;
+
+&lt;!-- Alpine.js v3 --&gt;
+&lt;script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"&gt;&lt;/script&gt;</code></pre>
+            </div>
+
+            <h3 class="sub-heading">Via NPM</h3>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>Bash</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>npm install alpine-portal</code></pre>
+            </div>
+            <p>Register the plugin with Alpine:</p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>JavaScript</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>import Alpine from 'alpinejs';
+import Portal from 'alpine-portal';
+
+// Standard registration
+Alpine.plugin(Portal);
+
+// Or with custom screen breakpoints
+Alpine.plugin(Portal, {
+    screens: {
+        tablet: 800,
+        desktop: 1280,
+    }
+});
+
+window.Alpine = Alpine;
+Alpine.start();</code></pre>
+            </div>
+        </section>
+
+        <!-- Section: Quick Start -->
+        <section id="quick-start">
+            <h2 class="section-heading">⚡ Quick Start</h2>
+            <p>Attach <code>x-portal</code> and a breakpoint condition to any element:</p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>HTML</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>&lt;!-- Source Container (Mobile) --&gt;
+&lt;div id="mobile-drawer"&gt;
+    &lt;div x-portal="#desktop-header" x-portal:screen="768"&gt;
+        &lt;input type="search" placeholder="Search..."&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;!-- Target Container (Desktop) --&gt;
+&lt;header id="desktop-header"&gt;
+    &lt;!-- Search input teleports here when viewport ≥ 768px --&gt;
+&lt;/header&gt;</code></pre>
+            </div>
+        </section>
+
+        <!-- Section: Bidirectional & Sibling Ordering -->
+        <section id="bidirectional">
+            <h2 class="section-heading">🔄 Core Mechanics</h2>
+            <h3 class="sub-heading" id="sibling-order">Exact Sibling Order Preservation</h3>
+            <p>
+                In earlier versions or naive implementations, returning an element uses <code>appendChild()</code>, 
+                which forces the element to the bottom of its original parent, permanently corrupting sibling layout order.
+            </p>
+            <p>
+                In <strong>Alpine Portal v1.0.0</strong>, an invisible DOM Anchor Comment node (<code>&lt;!-- x-portal-anchor --&gt;</code>) 
+                is placed immediately before the element upon initialization. When the element reverts, it returns 
+                <strong>precisely into its original sibling slot</strong>:
+            </p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>HTML</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>&lt;div id="parent"&gt;
+    &lt;span&gt;Item 1&lt;/span&gt;
+    &lt;!-- Item 2 teleports to #target, but returns right between Item 1 and Item 3! --&gt;
+    &lt;div x-portal="#target" x-portal:screen.md&gt;Item 2&lt;/div&gt;
+    &lt;span&gt;Item 3&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+
+            <h3 class="sub-heading" id="cls-spacer">Preventing Cumulative Layout Shift (CLS) with <code>.spacer</code></h3>
+            <p>
+                When an element teleports away from its original container, the remaining content may abruptly collapse upward, 
+                triggering an unpleasant Cumulative Layout Shift (CLS).
+            </p>
+            <p>
+                Add the <code>.spacer</code> (or <code>.placeholder</code>) modifier. Alpine Portal leaves a matching placeholder 
+                element retaining the original element's computed width and height until it returns:
+            </p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>HTML</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>&lt;!-- Leaves an invisible dimension-matched spacer in place --&gt;
+&lt;div x-portal.spacer="#target" x-portal:screen="768"&gt;
+    Fixed Height Hero Widget
+&lt;/div&gt;</code></pre>
+            </div>
+        </section>
+
+        <!-- Section: Breakpoints & Screens -->
+        <section id="breakpoints">
+            <h2 class="section-heading">📐 Breakpoint Syntax</h2>
+            <p>The <code>x-portal:screen</code> directive supports numbers, named breakpoints, and ranges:</p>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Syntax</th>
+                            <th>Generated Media Query</th>
+                            <th>Teleportation Behavior</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>x-portal:screen="640"</code></td>
+                            <td><code>(min-width: 640px)</code></td>
+                            <td>Teleports when viewport <strong>≥ 640px</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>x-portal:screen="-640"</code></td>
+                            <td><code>(max-width: 640px)</code></td>
+                            <td>Teleports when viewport <strong>≤ 640px</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>x-portal:screen.md</code></td>
+                            <td><code>(min-width: 768px)</code></td>
+                            <td>Tailwind named screen alias (modifier syntax)</td>
+                        </tr>
+                        <tr>
+                            <td><code>x-portal:screen="'-md'"</code></td>
+                            <td><code>(max-width: 768px)</code></td>
+                            <td>Negative named screen alias</td>
+                        </tr>
+                        <tr>
+                            <td><code>x-portal:screen="'640-1024'"</code></td>
+                            <td><code>(min-width: 640px) and (max-width: 1024px)</code></td>
+                            <td>Active strictly within range query</td>
+                        </tr>
+                        <tr>
+                            <td><code>x-portal:screen="0"</code></td>
+                            <td><em>None</em></td>
+                            <td>Disables teleportation</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="sub-heading" id="named-screens">Tailwind Preset Breakpoints</h3>
+            <p>The following presets are built-in:</p>
+            <ul>
+                <li><code>sm</code>: 640px</li>
+                <li><code>md</code>: 768px</li>
+                <li><code>lg</code>: 1024px</li>
+                <li><code>xl</code>: 1280px</li>
+                <li><code>2xl</code>: 1536px</li>
+            </ul>
+
+            <h3 class="sub-heading" id="media-queries">Arbitrary Media Queries (<code>x-portal:media</code>)</h3>
+            <p>For custom conditions (orientation, aspect ratio, dark mode, pointer capabilities), use <code>x-portal:media</code>:</p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>HTML</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>&lt;!-- Teleport in landscape mode --&gt;
+&lt;div x-portal="#sidebar" x-portal:media="(orientation: landscape)"&gt;&lt;/div&gt;
+
+&lt;!-- Teleport on touch-screen devices --&gt;
+&lt;div x-portal="#touch-menu" x-portal:media="(pointer: coarse)"&gt;&lt;/div&gt;</code></pre>
+            </div>
+        </section>
+
+        <!-- Section: Placements -->
+        <section id="placements">
+            <h2 class="section-heading">🧩 Placement Modifiers</h2>
+            <p>Control where the element lands inside or relative to the destination selector:</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Modifier</th>
+                            <th>DOM Action</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>.prepend</code></td>
+                            <td><code>target.prepend(el)</code></td>
+                            <td>Inserts as the <strong>first child</strong> of target</td>
+                        </tr>
+                        <tr>
+                            <td><code>.append</code></td>
+                            <td><code>target.appendChild(el)</code></td>
+                            <td>Inserts as the <strong>last child</strong> of target (default)</td>
+                        </tr>
+                        <tr>
+                            <td><code>.before</code></td>
+                            <td><code>target.before(el)</code></td>
+                            <td>Inserts immediately <strong>before</strong> target element</td>
+                        </tr>
+                        <tr>
+                            <td><code>.after</code></td>
+                            <td><code>target.after(el)</code></td>
+                            <td>Inserts immediately <strong>after</strong> target element</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>HTML</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>&lt;!-- Prepend to the top of the header --&gt;
+&lt;div x-portal.prepend="#header-bar" x-portal:screen="768"&gt;Alert Banner&lt;/div&gt;</code></pre>
+            </div>
+        </section>
+
+        <!-- Section: Multi-Target Routing -->
+        <section id="multi-target">
+            <h2 class="section-heading">🎯 Multi-Target Responsive Routing</h2>
+            <p>
+                Often an element must travel between more than two containers. Pass a dictionary of 
+                <code>{ 'breakpoint': 'target' }</code> routes:
+            </p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>HTML</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>&lt;div x-portal="{
+    '-640': '#mobile-drawer',
+    '641-1024': '#tablet-toolbar',
+    '1025': '#desktop-sidebar'
+}"&gt;
+    Multi-Target Navigation Links
+&lt;/div&gt;</code></pre>
+            </div>
+            <div class="alert tip">
+                <strong>How it works:</strong> The plugin sets up media query watchers for each route. 
+                The first matching route receives the element. If none match, it gracefully returns to its origin.
+            </div>
+        </section>
+
+        <!-- Section: Conditional Teleportation -->
+        <section id="conditional-when">
+            <h2 class="section-heading">⚙️ State-Driven Teleportation (<code>when</code>)</h2>
+            <p>
+                Control teleportation reactively with Alpine data attributes using <code>x-portal:when</code>:
+            </p>
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>HTML</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>&lt;div x-data="{ isModalOpen: false }"&gt;
+    &lt;button @click="isModalOpen = !isModalOpen"&gt;Toggle Search&lt;/button&gt;
+
+    &lt;!-- Teleports to modal ONLY when isModalOpen is true AND viewport is mobile --&gt;
+    &lt;div x-portal="#modal-body" x-portal:screen="-768" x-portal:when="isModalOpen"&gt;
+        Search Bar
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+        </section>
+
+        <!-- Section: Lifecycle Events -->
+        <section id="events">
+            <h2 class="section-heading">📡 Lifecycle Events</h2>
+            <p>Alpine Portal dispatches bubbling custom events on the portal element:</p>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Trigger</th>
+                            <th><code>$event.detail</code> Properties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>portal:teleport</code></td>
+                            <td>Fired when element moves to target</td>
+                            <td><code>{ target, targetElement, placement, portal }</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>portal:revert</code></td>
+                            <td>Fired when element returns to original position</td>
+                            <td><code>{ originalParent, portal }</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <span>HTML</span>
+                    <button class="copy-btn" @click="copyCode($el)">Copy</button>
+                </div>
+                <pre><code>&lt;div x-portal="#target" 
+     x-portal:screen="640"
+     @portal:teleport="console.log('Moved to: ', $event.detail.target)"
+     @portal:revert="console.log('Returned back home!')"&gt;
+    Interactive Element
+&lt;/div&gt;</code></pre>
+            </div>
+        </section>
+
+        <!-- Section: Livewire & Teardown -->
+        <section id="livewire">
+            <h2 class="section-heading">⚡ Livewire & Teardown</h2>
+            <p>
+                <strong>Laravel Livewire:</strong> Alpine Portal automatically listens to <code>livewire:navigating</code> 
+                and unbinds all media query listeners before SPA navigation occurs.
+            </p>
+            <p>
+                <strong>Alpine v3 Cleanup:</strong> When an element is destroyed (e.g. by <code>x-if</code> or component teardown), 
+                Alpine Portal connects to Alpine's official <code>cleanup()</code> hook to automatically destroy listeners, 
+                remove anchors, and prevent memory leaks.
+            </p>
+        </section>
+
+        <!-- Section: Live Playground Sandbox -->
+        <section id="live-playground">
+            <h2 class="section-heading">🎮 Live Interactive Playground</h2>
+            <p>Try testing responsive teleportation directly inside this documentation page:</p>
+
+            <div class="sandbox">
+                <div class="sandbox-header">
+                    <div>
+                        <strong style="color: var(--text-main);">Live Playground Box</strong>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">
+                            Current Viewport: <span style="color: var(--accent); font-weight: 700;" x-text="viewportWidth + 'px'"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="copy-btn" @click="sandboxCondition = !sandboxCondition" 
+                                :style="sandboxCondition ? 'background: #4f46e5; color: white;' : ''"
+                                x-text="sandboxCondition ? 'x-portal:when = TRUE' : 'x-portal:when = FALSE'">
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sandbox-grid">
+                    <!-- Source Container -->
+                    <div id="sandbox-source" class="sandbox-box">
+                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; margin-bottom: 0.5rem;">SOURCE (Origin)</div>
+                        <!-- Interactive Portaled Item -->
+                        <div x-portal="#sandbox-target" 
+                             x-portal:screen="800" 
+                             x-portal:when="sandboxCondition"
+                             class="portal-item">
+                            <span>🚀 Live Teleporting Card</span>
+                            <span style="font-size: 0.7rem; background: rgba(0,0,0,0.25); padding: 0.2rem 0.5rem; border-radius: 4px;">≥ 800px & when=true</span>
+                        </div>
+                    </div>
+
+                    <!-- Target Container -->
+                    <div id="sandbox-target" class="sandbox-box target">
+                        <div style="font-size: 0.75rem; color: var(--primary); font-weight: 700; margin-bottom: 0.5rem;">TARGET CONTAINER</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Cheat Sheet -->
+        <section id="cheat-sheet">
+            <h2 class="section-heading">📋 Directive Cheat Sheet</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Directive / Modifier</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>x-portal="#target"</code></td><td>Teleports element to specified CSS selector</td></tr>
+                        <tr><td><code>x-portal="{ '-640': '#m', '641': '#d' }"</code></td><td>Multi-target routing map</td></tr>
+                        <tr><td><code>x-portal.prepend</code></td><td>Prepends as first child inside destination</td></tr>
+                        <tr><td><code>x-portal.append</code></td><td>Appends as last child inside destination (default)</td></tr>
+                        <tr><td><code>x-portal.before</code></td><td>Inserts immediately before target element</td></tr>
+                        <tr><td><code>x-portal.after</code></td><td>Inserts immediately after target element</td></tr>
+                        <tr><td><code>x-portal.spacer</code></td><td>Inserts invisible dimension spacer to eliminate CLS</td></tr>
+                        <tr><td><code>x-portal:screen="640"</code></td><td>Min-width breakpoint in pixels</td></tr>
+                        <tr><td><code>x-portal:screen="-640"</code></td><td>Max-width breakpoint in pixels</td></tr>
+                        <tr><td><code>x-portal:screen.md</code></td><td>Tailwind named breakpoint shortcut</td></tr>
+                        <tr><td><code>x-portal:screen="'640-1024'"</code></td><td>Range query breakpoint</td></tr>
+                        <tr><td><code>x-portal:media="query"</code></td><td>Arbitrary media query string</td></tr>
+                        <tr><td><code>x-portal:when="condition"</code></td><td>Alpine reactive condition</td></tr>
+                        <tr><td><code>@portal:teleport</code></td><td>Fired on teleportation to target</td></tr>
+                        <tr><td><code>@portal:revert</code></td><td>Fired on return to original parent</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer>
+            <div>
+                Created with ❤️ by <a href="https://github.com/nabeghe" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: none;">Nabeghe</a>. MIT Licensed.
+            </div>
+            <div>
+                <a href="https://github.com/nabeghe/alpine-portal" target="_blank" rel="noopener" style="color: var(--text-muted); text-decoration: none;">GitHub Repository</a>
+            </div>
+        </footer>
+    </main>
+
+</body>
+</html>
