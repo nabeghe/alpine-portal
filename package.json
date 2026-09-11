@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "build": "set ROLLUP_ENV=production&& rollup -c",
-    "watch": "set ROLLUP_ENV=development&& rollup -c -w"
+    "watch": "set ROLLUP_ENV=development&& rollup -c -w",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",
@@ -27,9 +29,11 @@
     "@babel/core": "^7.21.8",
     "@babel/preset-env": "^7.21.5",
     "@rollup/plugin-terser": "^0.4.2",
+    "jsdom": "^30.0.1",
     "rollup": "^2.79.1",
     "rollup-plugin-babel": "^4.4.0",
     "rollup-plugin-filesize": "^10.0.0",
-    "rollup-plugin-node-resolve": "^5.2.0"
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "vitest": "^5.0.0"
   }
 }

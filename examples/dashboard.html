@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — Alpine Portal</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="../dist/alpine-portal.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        [x-cloak] { display: none !important; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        /* ── Top Nav ── */
+        .topnav {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 0 1.5rem;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topnav .brand {
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .topnav .brand span { color: #818cf8; }
+        .topnav .user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        .avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #a78bfa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* ── Layout ── */
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+        }
+        .main-area { flex: 1; min-width: 0; }
+        .sidebar-area { width: 320px; flex-shrink: 0; }
+
+        @media (max-width: 999px) {
+            .dashboard { flex-direction: column; }
+            .sidebar-area { width: 100%; }
+        }
+
+        /* ── Section Header ── */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .section-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .section-header .period {
+            font-size: 0.75rem;
+            color: #64748b;
+            background: #1e293b;
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+
+        /* ── Stats Cards (the portal content) ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 999px) {
+            .stats-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .stat-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        .stat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.15rem;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .stat-change {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        .stat-change.up { color: #34d399; }
+        .stat-change.down { color: #f87171; }
+
+        /* ── Chart Placeholder ── */
+        .chart-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-card h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 160px;
+            padding-top: 1rem;
+        }
+        .chart-bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        .chart-bar {
+            width: 100%;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.6s ease;
+        }
+        .chart-bar.primary { background: linear-gradient(to top, #6366f1, #818cf8); }
+        .chart-bar.secondary { background: #334155; }
+        .chart-label {
+            font-size: 0.65rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        /* ── Activity Feed ── */
+        .activity-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .activity-card h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #1e293b33;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+        .activity-dot.green { background: #34d399; }
+        .activity-dot.blue { background: #60a5fa; }
+        .activity-dot.yellow { background: #fbbf24; }
+        .activity-dot.red { background: #f87171; }
+        .activity-text { font-size: 0.85rem; line-height: 1.5; }
+        .activity-time { font-size: 0.7rem; color: #64748b; margin-top: 0.15rem; }
+
+        /* ── Sidebar Extras ── */
+        .sidebar-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .sidebar-card h3 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+        .team-list { list-style: none; }
+        .team-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+        }
+        .team-avatar {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            font-weight: 600;
+        }
+        .status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            margin-left: auto;
+        }
+        .status-dot.online { background: #34d399; }
+        .status-dot.away { background: #fbbf24; }
+        .status-dot.offline { background: #475569; }
+
+        /* ── Hints ── */
+        .hint {
+            max-width: 1200px;
+            margin: 1rem auto 0;
+            padding: 1rem 1.5rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #a5b4fc;
+        }
+        a.back {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            color: #818cf8;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        a.back:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- ── Top Nav ── -->
+    <nav class="topnav">
+        <div class="brand"><span>📊</span> Dashboard</div>
+        <div class="user">
+            <span>Hadi A.</span>
+            <div class="avatar">HA</div>
+        </div>
+    </nav>
+
+    <a href="index.html" class="back">← Back to Examples</a>
+
+    <div class="hint">
+        💡 <strong>Portal Demo:</strong> The stats summary cards (Revenue, Orders, Users, Conversion)
+        are shown <strong>inline above the chart on mobile</strong> and teleport to a
+        <strong>sidebar summary panel on desktop</strong> (≥ 1000px).
+    </div>
+
+    <div class="dashboard" x-data>
+        <!-- ── Main Area ── -->
+        <div class="main-area">
+            <div class="section-header">
+                <h2>Overview</h2>
+                <span class="period">Last 30 days</span>
+            </div>
+
+            <!-- Stats live here on mobile, portal to sidebar on desktop -->
+            <div id="mobile-stats">
+                <div x-portal="#desktop-stats" x-portal:screen="1000">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-value">$48.2K</div>
+                            <div class="stat-label">Revenue</div>
+                            <div class="stat-change up">↑ 12.5% vs last month</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📦</div>
+                            <div class="stat-value">1,847</div>
+                            <div class="stat-label">Orders</div>
+                            <div class="stat-change up">↑ 8.2% vs last month</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-value">3,429</div>
+                            <div class="stat-label">Active Users</div>
+                            <div class="stat-change up">↑ 23.1% vs last month</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-value">3.8%</div>
+                            <div class="stat-label">Conversion</div>
+                            <div class="stat-change down">↓ 0.4% vs last month</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="chart-card">
+                <h3>Revenue Over Time</h3>
+                <div class="chart-bars">
+                    <div class="chart-bar-wrap"><div class="chart-bar primary" style="height:45%"></div><span class="chart-label">Mon</span></div>
+                    <div class="chart-bar-wrap"><div class="chart-bar primary" style="height:62%"></div><span class="chart-label">Tue</span></div>
+                    <div class="chart-bar-wrap"><div class="chart-bar primary" style="height:38%"></div><span class="chart-label">Wed</span></div>
+                    <div class="chart-bar-wrap"><div class="chart-bar primary" style="height:78%"></div><span class="chart-label">Thu</span></div>
+                    <div class="chart-bar-wrap"><div class="chart-bar primary" style="height:55%"></div><span class="chart-label">Fri</span></div>
+                    <div class="chart-bar-wrap"><div class="chart-bar secondary" style="height:30%"></div><span class="chart-label">Sat</span></div>
+                    <div class="chart-bar-wrap"><div class="chart-bar secondary" style="height:22%"></div><span class="chart-label">Sun</span></div>
+                </div>
+            </div>
+
+            <!-- Activity -->
+            <div class="activity-card">
+                <h3>Recent Activity</h3>
+                <div class="activity-item">
+                    <span class="activity-dot green"></span>
+                    <div>
+                        <div class="activity-text">New order <strong>#4892</strong> placed by Sarah K.</div>
+                        <div class="activity-time">2 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-dot blue"></span>
+                    <div>
+                        <div class="activity-text">User <strong>mike.chen</strong> upgraded to Pro plan</div>
+                        <div class="activity-time">15 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-dot yellow"></span>
+                    <div>
+                        <div class="activity-text">Payment pending for order <strong>#4887</strong></div>
+                        <div class="activity-time">1 hour ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-dot red"></span>
+                    <div>
+                        <div class="activity-text">Server load exceeded 85% threshold</div>
+                        <div class="activity-time">2 hours ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-dot green"></span>
+                    <div>
+                        <div class="activity-text">Deployment <strong>v2.4.1</strong> completed successfully</div>
+                        <div class="activity-time">3 hours ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Sidebar ── -->
+        <aside class="sidebar-area">
+            <!-- Stats portal here on desktop -->
+            <div id="desktop-stats"></div>
+
+            <div class="sidebar-card">
+                <h3>Team</h3>
+                <ul class="team-list">
+                    <li>
+                        <div class="team-avatar" style="background:#6366f1">HA</div>
+                        <span>Hadi Akbarzadeh</span>
+                        <span class="status-dot online"></span>
+                    </li>
+                    <li>
+                        <div class="team-avatar" style="background:#ec4899">SK</div>
+                        <span>Sarah Kim</span>
+                        <span class="status-dot online"></span>
+                    </li>
+                    <li>
+                        <div class="team-avatar" style="background:#f59e0b">MC</div>
+                        <span>Mike Chen</span>
+                        <span class="status-dot away"></span>
+                    </li>
+                    <li>
+                        <div class="team-avatar" style="background:#10b981">AR</div>
+                        <span>Alex Rivera</span>
+                        <span class="status-dot offline"></span>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+
+</body>
+</html>

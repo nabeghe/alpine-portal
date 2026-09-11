@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Page — Alpine Portal</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="../dist/alpine-portal.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        [x-cloak] { display: none !important; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        /* ── Top Bar ── */
+        .topbar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar .brand { font-weight: 800; font-size: 1.2rem; color: #6366f1; }
+        .topbar .cart-icon { font-size: 1.25rem; cursor: pointer; }
+
+        /* ── Breadcrumb ── */
+        .breadcrumb {
+            max-width: 1100px;
+            margin: 1rem auto;
+            padding: 0 1.5rem;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .breadcrumb a { color: #64748b; text-decoration: none; }
+        .breadcrumb a:hover { color: #6366f1; }
+
+        /* ── Layout ── */
+        .product-layout {
+            max-width: 1100px;
+            margin: 0 auto 3rem;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 2.5rem;
+        }
+        .product-main { flex: 1; min-width: 0; }
+        .product-sidebar { width: 340px; flex-shrink: 0; }
+
+        @media (max-width: 899px) {
+            .product-layout { flex-direction: column; }
+            .product-sidebar { width: 100%; }
+        }
+
+        /* ── Product Image ── */
+        .product-image {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe, #a5b4fc);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ── Mobile CTA Slot ── */
+        #mobile-cta-slot { margin-bottom: 1.5rem; }
+
+        /* ── Product Details ── */
+        .product-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.9rem;
+        }
+        .stars { color: #f59e0b; letter-spacing: 2px; }
+        .rating-text { color: #64748b; }
+
+        .product-desc {
+            color: #475569;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .specs { margin-bottom: 2rem; }
+        .specs h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: #334155;
+        }
+        .specs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .specs-table tr { border-bottom: 1px solid #f1f5f9; }
+        .specs-table td { padding: 0.6rem 0; }
+        .specs-table td:first-child { color: #64748b; width: 40%; }
+        .specs-table td:last-child { font-weight: 500; }
+
+        /* ── CTA Box (the portal content) ── */
+        .cta-box {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .cta-price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+        .cta-price .original {
+            font-size: 1rem;
+            color: #94a3b8;
+            text-decoration: line-through;
+            font-weight: 400;
+            margin-left: 0.5rem;
+        }
+        .cta-price .discount {
+            font-size: 0.85rem;
+            color: #16a34a;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .cta-stock {
+            font-size: 0.8rem;
+            color: #16a34a;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .cta-stock .dot {
+            width: 8px; height: 8px;
+            background: #16a34a;
+            border-radius: 50%;
+        }
+        .btn-primary {
+            display: block;
+            width: 100%;
+            padding: 0.875rem;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 0.625rem;
+        }
+        .btn-primary:hover { background: #4f46e5; }
+        .btn-secondary {
+            display: block;
+            width: 100%;
+            padding: 0.875rem;
+            background: white;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { border-color: #6366f1; color: #6366f1; }
+        .cta-perks {
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid #f1f5f9;
+            list-style: none;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .cta-perks li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0;
+        }
+        .cta-perks li span { font-size: 1rem; }
+
+        /* ── Sidebar Sticky ── */
+        .sidebar-sticky { position: sticky; top: 1.5rem; }
+
+        /* ── Hints ── */
+        .hint {
+            max-width: 1100px;
+            margin: 1rem auto;
+            padding: 1rem 1.5rem;
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #92400e;
+        }
+        a.back {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            color: #818cf8;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        a.back:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- ── Top Bar ── -->
+    <div class="topbar">
+        <div class="brand">ShopPortal</div>
+        <div class="cart-icon">🛒</div>
+    </div>
+
+    <a href="index.html" class="back">← Back to Examples</a>
+
+    <div class="breadcrumb">
+        <a href="#">Home</a> / <a href="#">Electronics</a> / <a href="#">Headphones</a> / <span>ProSound X1</span>
+    </div>
+
+    <div class="hint">
+        💡 <strong>Portal Demo:</strong> The purchase box (price, Add to Cart, etc.) lives
+        <strong>below the image on mobile</strong> and teleports to a <strong>sticky sidebar on desktop</strong> (≥ 900px).
+    </div>
+
+    <div class="product-layout" x-data>
+        <!-- ── Main Content ── -->
+        <div class="product-main">
+            <div class="product-image">🎧</div>
+
+            <!-- CTA lands here on mobile -->
+            <div id="mobile-cta-slot">
+                <div x-portal="#desktop-cta-slot" x-portal:screen="900">
+                    <div class="cta-box">
+                        <div class="cta-price">
+                            $299
+                            <span class="original">$399</span>
+                            <span class="discount">-25%</span>
+                        </div>
+                        <div class="cta-stock">
+                            <span class="dot"></span> In stock — ships within 24 hours
+                        </div>
+                        <button class="btn-primary">🛒 Add to Cart</button>
+                        <button class="btn-secondary">♡ Add to Wishlist</button>
+                        <ul class="cta-perks">
+                            <li><span>🚚</span> Free shipping on orders over $50</li>
+                            <li><span>↩️</span> 30-day free returns</li>
+                            <li><span>🛡️</span> 2-year warranty included</li>
+                            <li><span>💳</span> Pay in 4 installments with Klarna</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h1 class="product-title">ProSound X1 Wireless Headphones</h1>
+            <div class="product-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-text">4.8 (2,847 reviews)</span>
+            </div>
+
+            <p class="product-desc">
+                Experience studio-quality sound with the ProSound X1. Featuring active noise cancellation,
+                40-hour battery life, and premium memory foam ear cushions for all-day comfort. Bluetooth 5.3
+                ensures a stable, low-latency connection for both music and calls.
+            </p>
+            <p class="product-desc">
+                The adaptive EQ automatically tunes music to your ears, while the transparency mode lets you
+                hear the world around you when needed. Whether you're commuting, working, or relaxing, the
+                X1 delivers an immersive audio experience.
+            </p>
+
+            <div class="specs">
+                <h3>Specifications</h3>
+                <table class="specs-table">
+                    <tr><td>Driver Size</td><td>40mm custom drivers</td></tr>
+                    <tr><td>Battery Life</td><td>Up to 40 hours (ANC on)</td></tr>
+                    <tr><td>Connectivity</td><td>Bluetooth 5.3, 3.5mm jack</td></tr>
+                    <tr><td>Noise Cancellation</td><td>Adaptive ANC + Transparency</td></tr>
+                    <tr><td>Weight</td><td>250g</td></tr>
+                    <tr><td>Charging</td><td>USB-C, 10min = 3hrs playback</td></tr>
+                    <tr><td>Water Resistance</td><td>IPX4</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Sidebar (desktop target) ── -->
+        <aside class="product-sidebar">
+            <div class="sidebar-sticky" id="desktop-cta-slot">
+                <!-- CTA box portals here on desktop -->
+            </div>
+        </aside>
+    </div>
+
+</body>
+</html>

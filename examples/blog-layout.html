@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Layout — Alpine Portal</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="../dist/alpine-portal.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        [x-cloak] { display: none !important; }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: #fafaf9;
+            color: #1c1917;
+            line-height: 1.8;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e7e5e4;
+            padding: 1.25rem 1.5rem;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .header p { color: #78716c; font-size: 0.9rem; margin-top: 0.25rem; font-family: sans-serif; }
+
+        /* ── Layout ── */
+        .layout {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 2.5rem;
+        }
+        .article-area { flex: 1; min-width: 0; }
+        .sidebar-area { width: 300px; flex-shrink: 0; }
+
+        @media (max-width: 899px) {
+            .layout { flex-direction: column; }
+            .sidebar-area { width: 100%; }
+        }
+
+        /* ── Article ── */
+        .article {
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .article-meta {
+            font-family: sans-serif;
+            font-size: 0.8rem;
+            color: #a8a29e;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .article-meta .tag {
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 0.15em 0.5em;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+        .article h2 {
+            font-size: 2rem;
+            line-height: 1.3;
+            margin-bottom: 1.25rem;
+            letter-spacing: -0.02em;
+        }
+        .article p { margin-bottom: 1.25rem; color: #44403c; }
+        .article img {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            margin-bottom: 1.5rem;
+        }
+
+        /* ── Sidebar Widgets ── */
+        .sidebar-widget {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            margin-bottom: 1.25rem;
+        }
+        .sidebar-widget h3 {
+            font-family: sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #78716c;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e7e5e4;
+        }
+
+        /* Author Card */
+        .author-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .author-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .author-info { font-family: sans-serif; }
+        .author-info strong { display: block; font-size: 0.95rem; }
+        .author-info span { font-size: 0.8rem; color: #a8a29e; }
+
+        /* Related Posts */
+        .related-list { list-style: none; font-family: sans-serif; }
+        .related-list li {
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #f5f5f4;
+            font-size: 0.9rem;
+        }
+        .related-list li:last-child { border-bottom: none; }
+        .related-list a {
+            color: #1c1917;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .related-list a:hover { color: #818cf8; }
+
+        /* Tags */
+        .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; font-family: sans-serif; }
+        .tags span {
+            background: #f5f5f4;
+            color: #57534e;
+            padding: 0.3em 0.75em;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            cursor: default;
+        }
+        .tags span:hover { background: #818cf8; color: white; }
+
+        /* ── Hint ── */
+        .hint {
+            max-width: 1100px;
+            margin: 0 auto 2rem;
+            padding: 1rem 1.5rem;
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #92400e;
+            font-family: sans-serif;
+        }
+        a.back {
+            display: inline-block;
+            padding: 0 1.5rem;
+            margin-top: 1.5rem;
+            color: #818cf8;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-family: sans-serif;
+        }
+        a.back:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back">← Back to Examples</a>
+
+    <header class="header">
+        <h1>The Alpine Journal</h1>
+        <p>Thoughts on web development, design, and JavaScript</p>
+    </header>
+
+    <div class="hint">
+        💡 <strong>Portal Demo:</strong> The sidebar widgets (Author, Related Posts, Tags) teleport from
+        <strong>below the article on mobile</strong> to the <strong>right sidebar on desktop</strong> (≥ 900px).
+        Resize to see it!
+    </div>
+
+    <div class="layout" x-data>
+        <!-- ── Article ── -->
+        <div class="article-area">
+            <article class="article">
+                <div class="article-meta">
+                    <span class="tag">Tutorial</span>
+                    <span>September 11, 2026 · 5 min read</span>
+                </div>
+                <h2>Building Responsive Layouts Without JavaScript Duplication</h2>
+                <img src="" alt="Article hero image">
+                <p>
+                    One of the most common challenges in responsive web design is moving content between
+                    different positions in the DOM based on screen size. Traditionally, developers resort
+                    to duplicating HTML elements and toggling visibility with CSS — but this leads to
+                    maintenance headaches and accessibility issues.
+                </p>
+                <p>
+                    What if you could define your content once and have it teleport to the right location
+                    automatically? That's exactly what Alpine Portal does. With a simple directive, your
+                    elements move between containers based on media query breakpoints.
+                </p>
+                <p>
+                    The key insight is using <code>window.matchMedia</code> instead of resize event listeners.
+                    This delegates the breakpoint evaluation to the browser's native CSS engine, resulting
+                    in better performance and more predictable behavior.
+                </p>
+                <p>
+                    Consider a blog layout like this very page. On desktop, we want the author info,
+                    related posts, and tags in a sidebar. On mobile, we want them below the article.
+                    With Alpine Portal, the markup exists in one place and moves automatically.
+                </p>
+            </article>
+
+            <!-- Sidebar content starts here (mobile-first), portals to sidebar on desktop -->
+            <div id="mobile-sidebar" style="margin-top: 1.25rem;">
+                <div x-portal="#desktop-sidebar" x-portal:screen="900">
+
+                    <div class="sidebar-widget">
+                        <h3>About the Author</h3>
+                        <div class="author-card">
+                            <div class="author-avatar">✍️</div>
+                            <div class="author-info">
+                                <strong>Hadi Akbarzadeh</strong>
+                                <span>Full-stack developer & open source enthusiast</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-widget">
+                        <h3>Related Posts</h3>
+                        <ul class="related-list">
+                            <li><a href="#">Understanding Alpine.js Directives</a></li>
+                            <li><a href="#">CSS Media Queries Deep Dive</a></li>
+                            <li><a href="#">Teleportation vs. Duplication in UI</a></li>
+                            <li><a href="#">Livewire + Alpine Best Practices</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="sidebar-widget">
+                        <h3>Tags</h3>
+                        <div class="tags">
+                            <span>Alpine.js</span>
+                            <span>JavaScript</span>
+                            <span>Responsive</span>
+                            <span>CSS</span>
+                            <span>Plugin</span>
+                            <span>DOM</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Sidebar (desktop target) ── -->
+        <aside class="sidebar-area" id="desktop-sidebar">
+            <!-- Portal content lands here on wide screens -->
+        </aside>
+    </div>
+
+</body>
+</html>

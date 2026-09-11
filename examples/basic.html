@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Usage — Alpine Portal</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="../dist/alpine-portal.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            padding: 2rem;
+        }
+        [x-cloak] { display: none !important; }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+        .desc { color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem; }
+        .box {
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .box h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            opacity: 0.8;
+        }
+        .box-a { background: #ede9fe; border: 2px solid #c4b5fd; }
+        .box-b { background: #dcfce7; border: 2px solid #86efac; }
+        .portal-content {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            transition: all 0.2s;
+        }
+        .badge {
+            display: inline-block;
+            background: #818cf8;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2em 0.6em;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .hint {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #92400e;
+        }
+        a.back { display: inline-block; margin-bottom: 1.5rem; color: #818cf8; text-decoration: none; font-size: 0.85rem; }
+        a.back:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back">← Back to Examples</a>
+        <h1>🔀 Basic Usage</h1>
+        <p class="desc">The content below teleports from <strong>Box A</strong> to <strong>Box B</strong> when viewport ≥ 640px. Resize to see it.</p>
+
+        <div x-data id="box-a" class="box box-a">
+            <h2>📦 Box A <span style="font-weight:400; font-size: 0.8rem;">(original parent)</span></h2>
+            <div x-portal="#box-b" x-portal:screen="640" class="portal-content">
+                <div class="badge">PORTAL CONTENT</div>
+                <p>👋 I live in Box A by default, but I teleport to Box B on screens wider than 640px!</p>
+            </div>
+        </div>
+
+        <div x-data id="box-b" class="box box-b">
+            <h2>📦 Box B <span style="font-weight:400; font-size: 0.8rem;">(target)</span></h2>
+            <!-- Portal content will appear here on wide screens -->
+        </div>
+
+        <div class="hint">
+            💡 <strong>Try it:</strong> Resize your browser window below 640px and back. Watch the white card move between the purple and green boxes.
+        </div>
+    </div>
+</body>
+</html>

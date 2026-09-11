@@ -1,28 +1,151 @@
 <!doctype html>
-<html lang="en" xmlns:x-portal="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Alpine Portal</title>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="../dist/alpine-portal.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpine Portal — Examples</title>
     <style>
-        [x-cloak] { display: none !important; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+        .subtitle code {
+            background: #1e293b;
+            padding: 0.15em 0.4em;
+            border-radius: 4px;
+            color: #818cf8;
+            font-size: 0.9em;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 1.75rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover {
+            border-color: #818cf8;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(129, 140, 248, 0.15);
+        }
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .card h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #f1f5f9;
+        }
+        .card p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            flex: 1;
+        }
+        .card .tag {
+            margin-top: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            color: #818cf8;
+            background: rgba(129, 140, 248, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            width: fit-content;
+        }
+        .hint {
+            margin-top: 2.5rem;
+            padding: 1.25rem;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .hint strong { color: #f472b6; }
     </style>
 </head>
-<body style="color: #212121; margin: 0; padding: 0;">
+<body>
+    <div class="container">
+        <h1>Alpine Portal</h1>
+        <p class="subtitle">
+            Responsive DOM teleportation for Alpine.js.<br>
+            The <code>x-portal</code> directive moves elements between containers based on screen breakpoints — and moves them back automatically.
+        </p>
 
-    <div x-data id="div1" style="background: #E91E63; padding: 5px;">
-        <h2>Div 1</h2>
-        <div x-portal="#div2" x-portal:screen="640">
-            lorem ipsum dolor sit amet, consectetur adipisicing elit
+        <div class="grid">
+            <a href="basic.html" class="card">
+                <div class="card-icon">🔀</div>
+                <h2>Basic Usage</h2>
+                <p>The simplest portal setup — teleport content between two colored containers at 640px breakpoint.</p>
+                <div class="tag">Beginner</div>
+            </a>
+
+            <a href="responsive-nav.html" class="card">
+                <div class="card-icon">🧭</div>
+                <h2>Responsive Navigation</h2>
+                <p>Navigation links move from a horizontal top bar on desktop to a mobile hamburger drawer on small screens.</p>
+                <div class="tag">Real-world</div>
+            </a>
+
+            <a href="blog-layout.html" class="card">
+                <div class="card-icon">📰</div>
+                <h2>Blog Layout</h2>
+                <p>A blog page where the sidebar moves below the article on mobile and sits beside it on desktop.</p>
+                <div class="tag">Real-world</div>
+            </a>
+
+            <a href="product-page.html" class="card">
+                <div class="card-icon">🛒</div>
+                <h2>Product Page</h2>
+                <p>E-commerce product page — the purchase CTA box teleports from sidebar on desktop to below the image on mobile.</p>
+                <div class="tag">Real-world</div>
+            </a>
+
+            <a href="dashboard.html" class="card">
+                <div class="card-icon">📊</div>
+                <h2>Dashboard</h2>
+                <p>Dashboard stats cards reorganize from a sidebar summary on desktop to inline cards on mobile.</p>
+                <div class="tag">Real-world</div>
+            </a>
+        </div>
+
+        <div class="hint">
+            <strong>💡 Tip:</strong> Resize your browser window in each example to see the portal in action.
+            Elements teleport at the defined breakpoint and automatically return when the viewport changes back.
         </div>
     </div>
-
-    <div x-data id="div2" style="background: #8BC34A; padding: 5px;">
-        <h2>Div 2</h2>
-    </div>
-
 </body>
 </html>
