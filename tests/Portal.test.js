@@ -315,4 +315,256 @@ describe('Portal', () => {
             expect(parent.contains(el)).toBe(true);
         });
     });
+
+    describe('v1.0.0 Features: DOM Position Preservation', () => {
+        it('should restore element to its exact original sibling position on revert', () => {
+            // Setup siblings: prevEl, el, nextEl
+            const prevEl = document.createElement('span');
+            prevEl.textContent = 'prev';
+            const nextEl = document.createElement('span');
+            nextEl.textContent = 'next';
+
+            parent.innerHTML = '';
+            parent.appendChild(prevEl);
+            parent.appendChild(el);
+            parent.appendChild(nextEl);
+
+            const portal = new Portal(el);
+            portal.target = '#target';
+
+            // Initial sibling order: prevEl, el, nextEl
+            expect(Array.from(parent.children)).toEqual([prevEl, el, nextEl]);
+
+            // Teleport to target
+            portal.onResize({ matches: true });
+            expect(target.contains(el)).toBe(true);
+            expect(Array.from(parent.children)).toEqual([prevEl, nextEl]);
+
+            // Revert back
+            portal.onResize({ matches: false });
+            expect(target.contains(el)).toBe(false);
+            expect(Array.from(parent.children)).toEqual([prevEl, el, nextEl]);
+        });
+    });
+
+    describe('v1.0.0 Features: Named Breakpoints & Ranges', () => {
+        it('should resolve named breakpoint "md" to min-width', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.screen = 'md';
+            portal.update();
+
+            expect(mockMatchMedia).toHaveBeenCalledWith('(min-width: 768px)');
+        });
+
+        it('should resolve negative named breakpoint "-lg" to max-width', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.screen = '-lg';
+            portal.update();
+
+            expect(mockMatchMedia).toHaveBeenCalledWith('(max-width: 1024px)');
+        });
+
+        it('should resolve range string "640-1024" to compound query', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.screen = '640-1024';
+            portal.update();
+
+            expect(mockMatchMedia).toHaveBeenCalledWith('(min-width: 640px) and (max-width: 1024px)');
+        });
+
+        it('should resolve range array [768, 1280] to compound query', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.screen = [768, 1280];
+            portal.update();
+
+            expect(mockMatchMedia).toHaveBeenCalledWith('(min-width: 768px) and (max-width: 1280px)');
+        });
+
+        it('should support arbitrary media query string directly', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.media = '(orientation: landscape)';
+            portal.update();
+
+            expect(mockMatchMedia).toHaveBeenCalledWith('(orientation: landscape)');
+        });
+    });
+
+    describe('v1.0.0 Features: Placement Modifiers', () => {
+        it('should prepend element into target when placement is "prepend"', () => {
+            const existingChild = document.createElement('div');
+            existingChild.id = 'existing';
+            target.appendChild(existingChild);
+
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.placement = 'prepend';
+
+            portal.onResize({ matches: true });
+
+            expect(target.firstChild).toBe(el);
+        });
+
+        it('should insert before target when placement is "before"', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.placement = 'before';
+
+            portal.onResize({ matches: true });
+
+            expect(target.previousElementSibling).toBe(el);
+        });
+
+        it('should insert after target when placement is "after"', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.placement = 'after';
+
+            portal.onResize({ matches: true });
+
+            expect(target.nextElementSibling).toBe(el);
+        });
+    });
+
+    describe('v1.0.0 Features: Layout Shift Spacer (.spacer)', () => {
+        it('should insert a spacer when teleported and remove it on revert', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.spacer = true;
+
+            portal.onResize({ matches: true });
+            expect(parent.querySelector('.x-portal-spacer')).not.toBeNull();
+
+            portal.onResize({ matches: false });
+            expect(parent.querySelector('.x-portal-spacer')).toBeNull();
+        });
+    });
+
+    describe('v1.0.0 Features: Lifecycle Custom Events', () => {
+        it('should dispatch "portal:teleport" when teleporting to target', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+
+            const teleportListener = vi.fn();
+            el.addEventListener('portal:teleport', teleportListener);
+
+            portal.onResize({ matches: true });
+
+            expect(teleportListener).toHaveBeenCalledOnce();
+            expect(teleportListener.mock.calls[0][0].detail.target).toBe('#target');
+        });
+
+        it('should dispatch "portal:revert" when returning to parent', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+
+            const revertListener = vi.fn();
+            el.addEventListener('portal:revert', revertListener);
+
+            portal.onResize({ matches: true });
+            portal.onResize({ matches: false });
+
+            expect(revertListener).toHaveBeenCalledOnce();
+            expect(revertListener.mock.calls[0][0].detail.originalParent).toBe(parent);
+        });
+    });
+
+    describe('v1.0.0 Features: State-Driven Condition (when)', () => {
+        it('should not teleport when "when" is false even if media query matches', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.when = false;
+
+            portal.onResize({ matches: true });
+
+            expect(parent.contains(el)).toBe(true);
+            expect(target.contains(el)).toBe(false);
+        });
+
+        it('should teleport when "when" is updated to true and check() is called', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.screen = 640;
+            portal.update();
+            portal.when = false;
+
+            // Media query matches
+            const mql = mockMatchMedia.mock.results.find((r) => r.value.media === '(min-width: 640px)');
+            mql.value.matches = true;
+
+            portal.check();
+            expect(parent.contains(el)).toBe(true);
+
+            portal.when = true;
+            portal.check();
+            expect(target.contains(el)).toBe(true);
+        });
+    });
+
+    describe('v1.0.0 Features: Multi-Target Routing', () => {
+        it('should route element to active target from route table', () => {
+            const mobileTarget = document.createElement('div');
+            mobileTarget.id = 'mobile-target';
+            const desktopTarget = document.createElement('div');
+            desktopTarget.id = 'desktop-target';
+            document.body.appendChild(mobileTarget);
+            document.body.appendChild(desktopTarget);
+
+            const portal = new Portal(el);
+            portal.setRoutes({
+                '-640': '#mobile-target',
+                '641': '#desktop-target',
+            });
+
+            const mobileMql = mockMatchMedia.mock.results.find((r) => r.value.media === '(max-width: 640px)');
+            const desktopMql = mockMatchMedia.mock.results.find((r) => r.value.media === '(min-width: 641px)');
+
+            // Mobile matches
+            mobileMql.value.matches = true;
+            desktopMql.value.matches = false;
+            portal.evaluateRoutes();
+
+            expect(mobileTarget.contains(el)).toBe(true);
+
+            // Switch to desktop
+            mobileMql.value.matches = false;
+            desktopMql.value.matches = true;
+            portal.evaluateRoutes();
+
+            expect(desktopTarget.contains(el)).toBe(true);
+            expect(mobileTarget.contains(el)).toBe(false);
+
+            // Neither matches -> return to origin
+            mobileMql.value.matches = false;
+            desktopMql.value.matches = false;
+            portal.evaluateRoutes();
+
+            expect(parent.contains(el)).toBe(true);
+        });
+    });
+
+    describe('v1.0.0 Features: destroy()', () => {
+        it('should clean up all listeners and return element to origin', () => {
+            const portal = new Portal(el);
+            portal.target = '#target';
+            portal.screen = 640;
+            portal.update();
+
+            const mql = mockMatchMedia.mock.results.find((r) => r.value.media === '(min-width: 640px)');
+
+            // Teleport element
+            portal.onResize({ matches: true });
+            expect(target.contains(el)).toBe(true);
+
+            // Destroy
+            portal.destroy();
+
+            expect(mql.value.removeEventListener).toHaveBeenCalledWith('change', portal.onResize);
+            expect(parent.contains(el)).toBe(true);
+        });
+    });
 });

@@ -7,7 +7,7 @@
 **alpine-portal** is an Alpine.js v3 plugin that introduces the `x-portal` directive for **screen-size-responsive DOM teleportation**. Unlike Alpine's built-in `x-teleport` which moves elements unconditionally, `x-portal` moves elements to a target selector based on media query breakpoints — and automatically returns them when the condition is no longer met (bidirectional behavior).
 
 - **Author:** Hadi Akbarzadeh
-- **Version:** 0.2.4
+- **Version:** 1.0.0
 - **License:** MIT
 - **Runtime Dependencies:** None (pure vanilla JS, requires Alpine.js v3 on `window.Alpine`)
 
@@ -15,9 +15,9 @@
 
 ```
 src/
-├── Portal.js    # Core engine — Portal constructor managing state, media queries, and DOM movement
-├── index.js     # NPM/ES module entry — registers Alpine directive `portal`
-└── build.js     # CDN/browser entry — listens to `alpine:init` and auto-registers plugin
+├── Portal.js    # Core engine — Portal constructor managing state, DOM anchors, media queries, placements, routing
+├── index.js     # NPM/ES module entry — registers Alpine directive `portal`, parses modifiers, Alpine cleanup hook
+└── build.js     # CDN/browser entry — listens to `alpine:init` and auto-registers plugin on window.AlpinePortal
 ```
 
 ### Entry Points
@@ -31,9 +31,11 @@ src/
 
 1. `index.js` registers the `portal` directive via `Alpine.directive('portal', ...)`.
 2. When `x-portal` is used on an element, a `Portal` instance is created and stored on `el._x_portal`.
-3. Directive modifiers (`x-portal:screen`, `x-portal:target`) configure the Portal instance.
-4. `Portal.update()` creates a `window.matchMedia(...)` listener based on the breakpoint value.
-5. On media query match/unmatch, elements are moved to/from the target container.
+3. A DOM comment marker (`<!-- x-portal-anchor -->`) is positioned before the element to remember its exact sibling position.
+4. Directive modifiers (`.prepend`, `.append`, `.before`, `.after`, `.spacer`, `x-portal:screen.md`) configure placement and behaviors.
+5. `Portal.update()` or `Portal.setRoutes()` creates `window.matchMedia(...)` listeners for responsive evaluation.
+6. On media query match/unmatch, elements move to target or revert to their exact original anchor position, dispatching `portal:teleport` or `portal:revert` events.
+7. Official Alpine v3 `cleanup(() => el._x_portal?.destroy())` handles complete listener and DOM teardown.
 
 ### Breakpoint Syntax
 
@@ -41,6 +43,9 @@ src/
 |----------|---------------------------|---------------------------------------|
 | `640`    | `(min-width: 640px)`       | Teleport when viewport ≥ 640px        |
 | `-640`   | `(max-width: 640px)`       | Teleport when viewport ≤ 640px        |
+| `'md'`   | `(min-width: 768px)`       | Tailwind named breakpoint (min-width)  |
+| `'-md'`  | `(max-width: 768px)`       | Tailwind named breakpoint (max-width)  |
+| `'640-1024'` | `(min-width: 640px) and (max-width: 1024px)` | Range query |
 | `0`      | —                          | Disable teleportation                 |
 
 ## Build System
@@ -74,6 +79,7 @@ The `dist/` directory is tracked in Git intentionally — it enables direct CDN 
 
 - **Alpine.js Plugin Architecture:** Follow Alpine v3's `Alpine.directive()` API for registering directives.
 - **DOM-Bound State (`el._x_portal`):** Plugin state is stored directly on the DOM element using the `_x_` prefix convention (consistent with Alpine internals).
+- **Exact Sibling Anchoring:** Use comment nodes (`<!-- x-portal-anchor -->`) rather than `appendChild` on revert to guarantee sibling order is preserved.
 - **Constructor Functions:** Core logic uses traditional JS constructor functions (not ES6 classes).
 - **Performance:** Use `window.matchMedia` with `change` event listeners instead of `window.onresize` — delegates breakpoint evaluation to the browser's native CSS engine.
 - **JSDoc with `@since`:** All methods and properties should include JSDoc annotations with `@since` version tags tracing when they were introduced.
@@ -81,6 +87,7 @@ The `dist/` directory is tracked in Git intentionally — it enables direct CDN 
 ### Framework Interop
 
 - **Livewire Support:** The plugin listens to `livewire:navigating` to clean up event listeners during SPA page transitions, preventing memory leaks.
+- **Alpine v3 Teardown:** Connects to Alpine's directive `cleanup` hook for proper unmounting and garbage collection.
 
 ### Git & Distribution
 
@@ -91,25 +98,21 @@ The `dist/` directory is tracked in Git intentionally — it enables direct CDN 
 
 - **Framework:** Vitest + jsdom
 - **Run Tests:** `npm test` (single run) or `npm run test:watch` (watch mode)
-- **Manual Testing:** Open `examples/index.html` in a browser and resize the window above/below 640px to verify element teleportation.
+- **Manual Testing:** Open `examples/index.html` in a browser and resize the window to verify element teleportation.
 
 ### Test Files
 
 | File                    | Tests | Coverage                                                    |
 |-------------------------|-------|-------------------------------------------------------------|
-| `tests/Portal.test.js`  | 16    | Construction, `update()`, `onResize()`, Livewire, initial positioning |
-| `tests/directive.test.js`| 9    | Directive registration, Portal creation, property setting, expression evaluation |
-| `tests/build.test.js`   | 2     | `alpine:init` listener, plugin initialization               |
-
-### Testing Conventions
-
-- Mock `window.Alpine.nextTick` as **deferred** (not immediate) to avoid `onResize(null)` during Portal construction.
-- Track and clean up `livewire:navigating` listeners in `afterEach` to prevent cross-test leaks.
-- Mock `window.matchMedia` with spied `addEventListener`/`removeEventListener` for verifying listener management.
+| `tests/Portal.test.js`  | 24    | Construction, `update()`, sibling order preservation, breakpoints, ranges, placements, spacer, events, multi-target, destroy, Livewire |
+| `tests/directive.test.js`| 17   | Directive registration, Portal creation, property setting, expression evaluation, modifiers, named screens, media, when, routes, cleanup hook |
+| `tests/build.test.js`   | 2     | `alpine:init` listener, UMD bundle initialization           |
 
 ## Key Design Decisions
 
 1. **Zero runtime dependencies** — The plugin is self-contained vanilla JS.
-2. **Bidirectional teleportation** — Elements return to their original parent when the breakpoint condition is no longer met (tracked via `elRealParent`).
-3. **Expression evaluation** — `x-portal:screen` supports dynamic Alpine expressions (not just static values).
-4. **UMD output format** — Ensures compatibility with both `<script>` tag usage and module bundlers.
+2. **Order-preserving bidirectional teleportation** — Elements return to their exact original sibling slot via comment anchor nodes.
+3. **Multi-Target Responsive Routing** — Elements can dynamically jump between multiple container targets based on media query maps.
+4. **Layout Shift Prevention** — Optional `.spacer` prevents Cumulative Layout Shift (CLS).
+5. **Expression evaluation & Named Breakpoints** — Supports numeric breakpoints, Tailwind aliases (`sm`/`md`/`lg`), range queries, dynamic Alpine expressions, and arbitrary CSS media queries.
+6. **UMD output format** — Ensures compatibility with both `<script>` tag usage and module bundlers.

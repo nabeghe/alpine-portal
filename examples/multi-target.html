@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Target Routing — Alpine Portal</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="../dist/alpine-portal.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        [x-cloak] { display: none !important; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        a.back { display: inline-block; margin-bottom: 1.5rem; color: #818cf8; text-decoration: none; font-size: 0.9rem; }
+        a.back:hover { text-decoration: underline; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: #f8fafc; }
+        .desc { color: #94a3b8; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.6; }
+        
+        .viewport-monitor {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .viewport-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #38bdf8;
+        }
+        
+        .targets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .target-box {
+            background: #1e293b;
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            padding: 1.25rem;
+            min-height: 220px;
+            transition: all 0.3s;
+        }
+        .target-box.active {
+            border-color: #818cf8;
+            background: rgba(129, 140, 248, 0.08);
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.15);
+        }
+        .target-box h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .target-rule {
+            font-size: 0.75rem;
+            font-family: monospace;
+            color: #94a3b8;
+            background: #0f172a;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .portal-card {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 1.25rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+            animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .portal-card h4 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .portal-card p { font-size: 0.85rem; opacity: 0.9; line-height: 1.5; }
+
+        .log-box {
+            background: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #a5f3fc;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body x-data="{
+    width: window.innerWidth,
+    activeLocation: 'Home',
+    logs: [],
+    addLog(msg) {
+        this.logs.unshift(new Date().toLocaleTimeString() + ' — ' + msg);
+        if (this.logs.length > 5) this.logs.pop();
+    }
+}" @resize.window="width = window.innerWidth">
+    <div class="container">
+        <a href="index.html" class="back">← Back to Examples</a>
+        <h1>🎯 Multi-Target Responsive Routing</h1>
+        <p class="desc">
+            With Alpine Portal v1.0.0, an element can dynamically jump between multiple container targets based on a media query mapping dictionary: 
+            <code>x-portal="{ '-640': '#mobile-target', '641-1024': '#tablet-target', '1025': '#desktop-target' }"</code>.
+        </p>
+
+        <!-- Viewport monitor -->
+        <div class="viewport-monitor">
+            <div>
+                <span style="color: #94a3b8; font-size: 0.9rem;">Current Viewport Width:</span>
+                <div class="viewport-badge">
+                    <span x-text="width + 'px'"></span>
+                    <span style="font-size: 0.8rem; color: #94a3b8;" x-text="width <= 640 ? '(Mobile)' : (width <= 1024 ? '(Tablet)' : '(Desktop)')"></span>
+                </div>
+            </div>
+            <div>
+                <span style="color: #94a3b8; font-size: 0.9rem;">Active Element Location:</span>
+                <div style="font-weight: 700; color: #34d399;" x-text="activeLocation"></div>
+            </div>
+        </div>
+
+        <!-- 3 Target Containers -->
+        <div class="targets-grid">
+            <!-- Mobile Container -->
+            <div id="mobile-target" class="target-box" :class="width <= 640 && 'active'">
+                <h3>
+                    📱 Mobile Drawer
+                    <span class="target-rule">&le; 640px</span>
+                </h3>
+            </div>
+
+            <!-- Tablet Container -->
+            <div id="tablet-target" class="target-box" :class="width > 640 && width <= 1024 && 'active'">
+                <h3>
+                    📟 Tablet Header
+                    <span class="target-rule">641px - 1024px</span>
+                </h3>
+            </div>
+
+            <!-- Desktop Container (Home) -->
+            <div id="desktop-target" class="target-box" :class="width > 1024 && 'active'">
+                <h3>
+                    🖥️ Desktop Sidebar (Home)
+                    <span class="target-rule">&gt; 1024px</span>
+                </h3>
+
+                <!-- The multi-target portaled element -->
+                <div x-portal="{
+                    '-640': '#mobile-target',
+                    '641-1024': '#tablet-target'
+                }"
+                @portal:teleport="activeLocation = $event.detail.target; addLog('Teleported to ' + $event.detail.target)"
+                @portal:revert="activeLocation = 'Desktop Sidebar (Home)'; addLog('Reverted to Home Parent')"
+                class="portal-card">
+                    <h4>🚀 Traveling Widget</h4>
+                    <p>I automatically teleport to Mobile Drawer on mobile, Tablet Header on tablet, and back home on desktop!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Events Log -->
+        <div style="margin-top: 1.5rem;">
+            <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #94a3b8;">Event Feed (portal:teleport / portal:revert):</h4>
+            <div class="log-box">
+                <template x-for="log in logs" :key="log">
+                    <div x-text="log"></div>
+                </template>
+                <div x-show="logs.length === 0" style="color: #64748b;">Resize the browser window to see live lifecycle event dispatching...</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

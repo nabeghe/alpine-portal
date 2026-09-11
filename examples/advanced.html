@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v1.0.0 Advanced Features — Alpine Portal</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="../dist/alpine-portal.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        [x-cloak] { display: none !important; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        a.back { display: inline-block; margin-bottom: 1.5rem; color: #818cf8; text-decoration: none; font-size: 0.9rem; }
+        a.back:hover { text-decoration: underline; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: #f8fafc; }
+        .desc { color: #94a3b8; margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.6; }
+
+        .feature-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .feature-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .feature-desc {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+        .feature-desc code {
+            background: #0f172a;
+            color: #818cf8;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        .demo-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 640px) {
+            .demo-row { grid-template-columns: 1fr; }
+        }
+
+        .box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 1rem;
+            min-height: 130px;
+        }
+        .box h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+        }
+
+        .item {
+            background: #1e293b;
+            border: 1px solid #475569;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .item.portal {
+            background: #4338ca;
+            border-color: #6366f1;
+            color: #e0e7ff;
+            font-weight: 600;
+        }
+        .x-portal-spacer {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px dashed #6366f1;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #818cf8;
+            min-height: 34px;
+        }
+        .x-portal-spacer::after {
+            content: '⚓ Preserved Spacer (No CLS)';
+        }
+
+        .toggle-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toggle-btn:hover { background: #2563eb; }
+    </style>
+</head>
+<body x-data="{
+    isWhenActive: false,
+    width: window.innerWidth
+}" @resize.window="width = window.innerWidth">
+    <div class="container">
+        <a href="index.html" class="back">← Back to Examples</a>
+        <h1>⚡ v1.0.0 Advanced Features</h1>
+        <p class="desc">
+            Explore new capabilities introduced in Alpine Portal v1.0.0: exact sibling order preservation, placement modifiers, layout shift spacers, and conditional <code>x-portal:when</code>.
+        </p>
+
+        <!-- Feature 1: Exact Sibling Position Restoration -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span>1️⃣ Exact Sibling Order Preservation</span>
+            </div>
+            <p class="feature-desc">
+                Notice how <strong>Item #2</strong> is situated strictly between Item #1 and Item #3. When you resize past <code>768px (md)</code>, it teleports to Destination Box. When you resize back, it returns <em>exactly</em> between #1 and #3 (never appended at the end!).
+            </p>
+            <div class="demo-row">
+                <div id="source-list" class="box">
+                    <h4>Source List (Original Parent)</h4>
+                    <div class="item"><span>Item #1 (Fixed)</span></div>
+                    <div x-portal="#dest-list" x-portal:screen.md class="item portal">
+                        <span>Item #2 (Portals to dest at ≥ md)</span>
+                    </div>
+                    <div class="item"><span>Item #3 (Fixed)</span></div>
+                </div>
+                <div id="dest-list" class="box">
+                    <h4>Destination Box (Target)</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 2: Placement Modifiers -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span>2️⃣ Placement Modifiers (<code>.prepend</code>, <code>.before</code>, <code>.after</code>)</span>
+            </div>
+            <p class="feature-desc">
+                This item uses <code>x-portal.prepend="#prepend-target"</code> so that when teleported, it is prepended at the top of the list rather than appended at the bottom.
+            </p>
+            <div class="demo-row">
+                <div class="box">
+                    <h4>Source</h4>
+                    <div x-portal.prepend="#prepend-target" x-portal:screen.md class="item portal">
+                        <span>🌟 VIP Item (Prepends to Target)</span>
+                    </div>
+                </div>
+                <div id="prepend-target" class="box">
+                    <h4>Destination (Prepended at Top)</h4>
+                    <div class="item"><span>Existing Item A</span></div>
+                    <div class="item"><span>Existing Item B</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 3: Layout Shift Spacer (.spacer) -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span>3️⃣ Layout Shift Spacer (<code>.spacer</code>)</span>
+            </div>
+            <p class="feature-desc">
+                With <code>x-portal.spacer</code>, when the element leaves its source, an invisible placeholder maintains its exact height and width, completely preventing Cumulative Layout Shift (CLS).
+            </p>
+            <div class="demo-row">
+                <div class="box">
+                    <h4>Source Container with .spacer</h4>
+                    <div class="item"><span>Top Content</span></div>
+                    <div x-portal.spacer="#spacer-dest" x-portal:screen.md class="item portal" style="height: 50px;">
+                        <span>Tall Widget (.spacer active)</span>
+                    </div>
+                    <div class="item"><span>Bottom Content (Never shifts!)</span></div>
+                </div>
+                <div id="spacer-dest" class="box">
+                    <h4>Destination Target</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 4: Conditional State Teleportation (x-portal:when) -->
+        <div class="feature-section">
+            <div class="feature-title">
+                <span>4️⃣ Reactive Condition (<code>x-portal:when</code>)</span>
+            </div>
+            <p class="feature-desc">
+                Teleportation can be toggled on-demand via Alpine state variables, regardless of screen size!
+            </p>
+            <div style="margin-bottom: 1rem;">
+                <button class="toggle-btn" @click="isWhenActive = !isWhenActive" x-text="isWhenActive ? 'Turn Condition OFF' : 'Turn Condition ON (Teleport)'"></button>
+                <span style="font-size: 0.85rem; color: #94a3b8; margin-left: 0.5rem;" x-text="'Current state: isWhenActive = ' + isWhenActive"></span>
+            </div>
+            <div class="demo-row">
+                <div class="box">
+                    <h4>Origin</h4>
+                    <div x-portal="#when-dest" x-portal:when="isWhenActive" class="item portal">
+                        <span>Dynamic Toggle Item</span>
+                    </div>
+                </div>
+                <div id="when-dest" class="box">
+                    <h4>Target Box</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

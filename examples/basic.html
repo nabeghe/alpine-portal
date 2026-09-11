@@ -69,11 +69,16 @@
         <h1>🔀 Basic Usage</h1>
         <p class="desc">The content below teleports from <strong>Box A</strong> to <strong>Box B</strong> when viewport ≥ 640px. Resize to see it.</p>
 
-        <div x-data id="box-a" class="box box-a">
+        <div x-data="{ status: 'In Box A' }" id="box-a" class="box box-a">
             <h2>📦 Box A <span style="font-weight:400; font-size: 0.8rem;">(original parent)</span></h2>
-            <div x-portal="#box-b" x-portal:screen="640" class="portal-content">
+            <div x-portal="#box-b" 
+                 x-portal:screen="640" 
+                 @portal:teleport="status = 'Teleported to Box B 🚀'"
+                 @portal:revert="status = 'Returned to Box A 🏠'"
+                 class="portal-content">
                 <div class="badge">PORTAL CONTENT</div>
-                <p>👋 I live in Box A by default, but I teleport to Box B on screens wider than 640px!</p>
+                <p>👋 I live in Box A by default, but I teleport to Box B on screens wider than 640px (or <code>x-portal:screen.sm</code>)!</p>
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #6366f1; font-weight: 600;" x-text="'Event Status: ' + status"></div>
             </div>
         </div>
 
@@ -83,7 +88,7 @@
         </div>
 
         <div class="hint">
-            💡 <strong>Try it:</strong> Resize your browser window below 640px and back. Watch the white card move between the purple and green boxes.
+            💡 <strong>Try it:</strong> Resize your browser window below 640px and back. Watch the white card move between the purple and green boxes and update its event status live via <code>@portal:teleport</code> and <code>@portal:revert</code>.
         </div>
     </div>
 </body>

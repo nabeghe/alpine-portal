@@ -182,4 +182,120 @@ describe('Directive Registration (index.js)', () => {
 
         expect(el._x_portal.screen).toBe(-640);
     });
+
+    describe('v1.0.0 Directive Enhancements', () => {
+        it('should parse placement modifiers (.prepend, .before, .after, .append)', () => {
+            registerPlugin(Alpine);
+            const callback = Alpine._directives['portal'];
+            const el = document.getElementById('portal-el');
+
+            callback(el, { value: null, modifiers: ['prepend'], expression: '#target' }, { evaluate: vi.fn() });
+            expect(el._x_portal.placement).toBe('prepend');
+
+            callback(el, { value: null, modifiers: ['before'], expression: '#target' }, { evaluate: vi.fn() });
+            expect(el._x_portal.placement).toBe('before');
+
+            callback(el, { value: null, modifiers: ['after'], expression: '#target' }, { evaluate: vi.fn() });
+            expect(el._x_portal.placement).toBe('after');
+
+            callback(el, { value: null, modifiers: ['append'], expression: '#target' }, { evaluate: vi.fn() });
+            expect(el._x_portal.placement).toBe('append');
+        });
+
+        it('should parse spacer modifier (.spacer or .placeholder)', () => {
+            registerPlugin(Alpine);
+            const callback = Alpine._directives['portal'];
+            const el = document.getElementById('portal-el');
+
+            callback(el, { value: null, modifiers: ['spacer'], expression: '#target' }, { evaluate: vi.fn() });
+            expect(el._x_portal.spacer).toBe(true);
+        });
+
+        it('should parse named screen modifier (x-portal:screen.md)', () => {
+            registerPlugin(Alpine);
+            const callback = Alpine._directives['portal'];
+            const el = document.getElementById('portal-el');
+
+            callback(el, { value: null, expression: '#target' }, { evaluate: vi.fn() });
+            callback(el, { value: 'screen', modifiers: ['md'], expression: '' }, { evaluate: vi.fn() });
+
+            expect(el._x_portal.screen).toBe('md');
+        });
+
+        it('should handle x-portal:media directive', () => {
+            registerPlugin(Alpine);
+            const callback = Alpine._directives['portal'];
+            const el = document.getElementById('portal-el');
+
+            callback(el, { value: null, expression: '#target' }, { evaluate: vi.fn() });
+
+            const evaluate = vi.fn(() => '(orientation: portrait)');
+            callback(el, { value: 'media', expression: "'(orientation: portrait)'" }, { evaluate });
+
+            expect(el._x_portal.media).toBe('(orientation: portrait)');
+        });
+
+        it('should handle x-portal:when directive and update state', () => {
+            registerPlugin(Alpine);
+            const callback = Alpine._directives['portal'];
+            const el = document.getElementById('portal-el');
+
+            callback(el, { value: null, expression: '#target' }, { evaluate: vi.fn() });
+
+            const evaluate = vi.fn(() => false);
+            callback(el, { value: 'when', expression: 'isReady' }, { evaluate });
+
+            expect(el._x_portal.when).toBe(false);
+        });
+
+        it('should parse multi-target route object literal expression', () => {
+            registerPlugin(Alpine);
+            const callback = Alpine._directives['portal'];
+            const el = document.getElementById('portal-el');
+
+            const routes = { '-640': '#mobile', '641': '#desktop' };
+            const evaluate = vi.fn(() => routes);
+
+            callback(el, { value: null, expression: "{ '-640': '#mobile', '641': '#desktop' }" }, { evaluate });
+
+            expect(el._x_portal.routes).toBeDefined();
+            expect(el._x_portal.routes.length).toBe(2);
+        });
+
+        it('should support custom screens via plugin options', () => {
+            registerPlugin(Alpine, {
+                screens: { tablet: 820, desktop: 1440 }
+            });
+
+            const callback = Alpine._directives['portal'];
+            const el = document.getElementById('portal-el');
+
+            callback(el, { value: null, expression: '#target' }, { evaluate: vi.fn() });
+
+            const evaluate = vi.fn(() => 'tablet');
+            callback(el, { value: 'screen', expression: "'tablet'" }, { evaluate });
+
+            expect(window.matchMedia).toHaveBeenCalledWith('(min-width: 820px)');
+        });
+
+        it('should register Alpine v3 cleanup hook on element teardown', () => {
+            registerPlugin(Alpine);
+            const callback = Alpine._directives['portal'];
+            const el = document.getElementById('portal-el');
+
+            let cleanupCallback;
+            const cleanup = vi.fn((cb) => { cleanupCallback = cb; });
+
+            callback(el, { value: null, expression: '#target' }, { evaluate: vi.fn(), cleanup });
+
+            expect(cleanup).toHaveBeenCalled();
+            const destroySpy = vi.spyOn(el._x_portal, 'destroy');
+
+            // Trigger cleanup
+            cleanupCallback();
+
+            expect(destroySpy).toHaveBeenCalled();
+            expect(el._x_portal).toBeUndefined();
+        });
+    });
 });
